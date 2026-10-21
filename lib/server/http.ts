@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
+import { Buffer } from 'node:buffer';
 import { z } from 'astro/zod';
 
 export class HttpError extends Error {
@@ -13,14 +14,16 @@ export function json(data: unknown, status = 200, headers: Record<string, string
   } });
 }
 
-export function submissionSecret(): string | undefined {
-  const secret = process.env.SUBMISSION_SECRET;
+type RuntimeSecrets = Partial<Pick<Cloudflare.Env, 'ADMIN_USERNAME' | 'ADMIN_PASSWORD' | 'SUBMISSION_SECRET'>>;
+
+export function submissionSecret(env: RuntimeSecrets): string | undefined {
+  const secret = env.SUBMISSION_SECRET;
   return secret && secret.length >= 32 ? secret : undefined;
 }
 
-export function requireAdmin(request: Request): Response | undefined {
-  const username = process.env.ADMIN_USERNAME || 'archivist';
-  const password = process.env.ADMIN_PASSWORD;
+export function requireAdmin(request: Request, env: RuntimeSecrets): Response | undefined {
+  const username = env.ADMIN_USERNAME || 'archivist';
+  const password = env.ADMIN_PASSWORD;
   if (!password || password.length < 32) return json({ error: 'Admin access is not configured.' }, 503);
   const header = request.headers.get('authorization') ?? '';
   const encoded = /^Basic ([A-Za-z0-9+/]+={0,2})$/i.exec(header)?.[1];
@@ -63,11 +66,11 @@ export function errorResponse(error: unknown) {
   if (error instanceof HttpError) return json({ error: error.message }, error.status, error.status === 429 ? { 'Retry-After': '3600' } : {});
   if (error instanceof z.ZodError) return json({ error: 'Please check the submitted fields.', fields: error.issues.map((issue) => ({ path: issue.path.join('.'), message: issue.message })) }, 400);
   // Do not log request bodies, endpoints, auth headers or secrets.
-  console.error('[archive] Request failed:', error instanceof Error ? error.name : 'Unknown error');
+  console.error(JSON.stringify({ event: 'archive_request_failed', error: error instanceof Error ? error.name : 'Unknown error' }));
   return json({ error: 'The record could not be saved. Please try again later.' }, 503);
 }
 
-// Bound failed-auth and malformed-body traffic without an external dependency.
+// Best-effort per-isolate attempt limiter. Successful-claim quotas are enforced in D1.
 const attempts = new Map<string, { count: number; resets: number }>();
 export function allowAttempt(key: string, limit = 30, now = Date.now()): boolean {
   for (const [key, entry] of attempts) if (entry.resets <= now) attempts.delete(key);

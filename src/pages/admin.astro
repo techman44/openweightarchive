@@ -1,16 +1,21 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { repository } from '../../lib/server/store';
+import { env } from 'cloudflare:workers';
+import type { Claim, Draft } from '../../lib/server/records';
 export const prerender = false;
-let claims: Awaited<ReturnType<ReturnType<typeof repository>['listClaims']>> = [];
-let drafts: Awaited<ReturnType<ReturnType<typeof repository>['listDrafts']>> = [];
+let claims: Claim[] = [];
+let drafts: Draft[] = [];
 let unavailable = false;
-try { [claims, drafts] = await Promise.all([repository().listClaims(), repository().listDrafts()]); }
+try {
+  const store = await repository(env);
+  [claims, drafts] = await Promise.all([store.listClaims(), store.listDrafts()]);
+}
 catch { unavailable = true; Astro.response.status = 503; }
 ---
 <Layout title="Editorial desk" noindex>
   <header class="page-intro"><p class="eyebrow">Private / Editorial desk</p><h1>Admin stub.</h1><p class="lead">Review submitted claims and save structured drafts. Publication remains a reviewed content change and rebuild.</p></header>
-  {unavailable ? <p class="notice">The file store is unavailable. Check its permissions and integrity before continuing.</p> : <>
+  {unavailable ? <p class="notice">Archive storage is unavailable. Check the database binding and migrations before continuing.</p> : <>
     <p class="notice">{claims.length} claims · {drafts.length} drafts. Verification is not connected. No administrative action can award verified status.</p>
     <section class="section"><div class="section-heading"><h2>Claim queue.</h2></div>
       {claims.length === 0 ? <p class="muted">No claims have been submitted.</p> : <div class="stack">{claims.slice().reverse().map((claim) => <article class="notice stack">

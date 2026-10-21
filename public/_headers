@@ -1,0 +1,23 @@
+# Separate HTML rules avoid combining short and immutable Cache-Control values.
+/
+  Cache-Control: public, max-age=60, must-revalidate
+/index.html
+  Cache-Control: public, max-age=60, must-revalidate
+/benchmarks
+  Cache-Control: public, max-age=60, must-revalidate
+/benchmarks/*
+  Cache-Control: public, max-age=60, must-revalidate
+/models/*
+  Cache-Control: public, max-age=60, must-revalidate
+/blog
+  Cache-Control: public, max-age=60, must-revalidate
+/blog/*
+  Cache-Control: public, max-age=60, must-revalidate
+/submit
+  Cache-Control: public, max-age=60, must-revalidate
+/submit/*
+  Cache-Control: public, max-age=60, must-revalidate
+/404.html
+  Cache-Control: public, max-age=60, must-revalidate
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

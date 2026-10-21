@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { Buffer } from 'node:buffer';
 import type { Submission } from '../schemas.ts';
 
 export function canonicalJSON(value: unknown): string {

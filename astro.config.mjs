@@ -1,10 +1,11 @@
 import { defineConfig } from 'astro/config';
-import node from '@astrojs/node';
+import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   site: 'https://openweightarchive.com',
   output: 'static',
-  adapter: node({ mode: 'standalone' }),
+  adapter: cloudflare({ imageService: 'passthrough', remoteBindings: false }),
+  session: false,
   server: { host: '127.0.0.1', port: 4321 },
   devToolbar: { enabled: false },
 });

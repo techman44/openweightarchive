@@ -88,6 +88,6 @@ Use one colour: warm paper on charcoal, or charcoal on uncoated paper. A small b
 
 ## Rendering and content contract
 
-Astro prerenders the register, model cards, benchmarks, journal, articles, submission shell and 404. Its Node adapter serves the intake-status island, authenticated admin page and JSON POST endpoints. Plain CSS custom properties and small native browser scripts provide all presentation and interaction; no UI framework, Tailwind or component dependency.
+Astro prerenders the register, model cards, benchmarks, journal, articles, submission shell and 404. Its Cloudflare adapter serves the intake-status island, authenticated admin page and JSON POST endpoints on Workers, with D1 persistence and Workers Static Assets. Plain CSS custom properties and small native browser scripts provide all presentation and interaction; no UI framework, Tailwind or component dependency.
 
 Models, benchmarks and posts are validated content collections. The benchmark loader reads the exact ct-bench envelope from `fixtures/`, with provenance and the model reference supplied separately in a manifest. JSON Schemas in `schemas/` are generated from the same definitions. Editorial drafts stay in the private repository until manually reviewed and moved to build-time content. Static public pages never read private submission storage.

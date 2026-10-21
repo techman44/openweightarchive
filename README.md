@@ -1,6 +1,6 @@
 # OpenWeightArchive
 
-Phase 1 scaffold for **openweightarchive.com**: a dark, editorial model archive built with Astro, plain CSS and native browser scripts. This implements [BRIEF.md](BRIEF.md); it is not a production benchmark verification service.
+Cloudflare Workers scaffold for **openweightarchive.com**: a dark, editorial model archive built with Astro, plain CSS and native browser scripts. This implements [BRIEF.md](BRIEF.md); it is not a production benchmark verification service.
 
 All three model records, their specifications and benchmark scores are **fictional fixtures**. Journal entries explain the proposed methods, not current AI news. Submitted scores remain unverified claims. No image assets have been generated.
 
@@ -9,47 +9,76 @@ All three model records, their specifications and benchmark scores are **fiction
 Use Node **22.22.0 or newer** (Node 24 recommended) and npm 9.6 or newer.
 
 ```sh
-npm install
+npm ci
+npm run db:migrate:local
 npm run dev
 ```
 
-Open `http://localhost:4321`. All public pages work without secrets; the admin and submission write endpoints return 503 until configured. The only direct dependencies are `astro` and its official `@astrojs/node` adapter. No framework, database, CSS library or test dependency is installed. Commit the lockfile for repeatable installs.
+Open `http://localhost:4321`. Astro runs in the local Workers runtime; `OWA_DB` uses local SQLite and `OWA_MEDIA` uses local R2 emulation. These commands require no Cloudflare credentials and do not access remote resources. Local data lives under ignored `.wrangler/state/`. The all-zero D1 ID in `wrangler.jsonc` is a deliberate deployment placeholder and works for local emulation.
 
 To exercise private functionality locally:
 
 ```sh
-cp .env.example .env
+cp .dev.vars.example .dev.vars
 openssl rand -hex 32
 openssl rand -hex 32
 ```
 
-Put the two different random values into `ADMIN_PASSWORD` and `SUBMISSION_SECRET` in `.env`. Keep `ADMIN_USERNAME=archivist` or choose a username without a colon. Both secrets need at least 32 characters. Never commit `.env`. Restart the dev server after changing runtime configuration. Open `/admin` and use the browser's Basic-auth prompt.
+Put the two different random values into `ADMIN_PASSWORD` and `SUBMISSION_SECRET` in `.dev.vars`. Both need at least 32 characters. The username defaults to `archivist` in `wrangler.jsonc`; use a username without a colon. Never commit secret files. Restart the dev server after changing runtime configuration. Open `/admin` and use the browser's Basic-auth prompt.
 
-| Variable | Purpose / default |
+| Binding / variable | Purpose |
 | --- | --- |
+| `OWA_DB` | D1 database `owa-cms`; required for production persistence |
+| `OWA_MEDIA` | R2 bucket `owa-media`; reserved for future evidence/media uploads |
 | `ADMIN_USERNAME` | Basic-auth username; defaults to `archivist` |
-| `ADMIN_PASSWORD` | Required random admin secret; missing/short disables admin |
-| `SUBMISSION_SECRET` | Independent HMAC key; missing/short disables claim intake |
-| `DATA_DIR` | Private persistent JSON store; defaults to `./data` relative to the process cwd |
-| `HOST` | Node listener; `.env.example` uses `127.0.0.1` |
-| `PORT` | Node listener; `.env.example` uses `4321` |
+| `ADMIN_PASSWORD` | Random Worker secret; missing/short disables admin |
+| `SUBMISSION_SECRET` | Independent Worker HMAC secret; missing/short disables intake |
 
-Development and start scripts load `.env` through Node. Server code reads secrets from `process.env` **at runtime**, never from `PUBLIC_*` variables or build-time interpolation. The build does not need secrets.
+Server code reads bindings and secrets at request time from `cloudflare:workers`. The build does not need secrets. `npm run cf:types` regenerates binding declarations after config changes. Runtime binding types are imported individually so Workers' HTMLRewriter types do not collide with browser DOM types.
+
+For development without D1, use **`npm run dev:json`**. This explicit Node/Vite development configuration loads `.dev.vars` and `.env`, and uses `./data/archive.json` (override `DATA_DIR` in `.env`). Keep that directory private and run one dev process against it. `repository()` selects D1 whenever present; it dynamically imports the JSON implementation only under `import.meta.env.DEV`. A failed D1 operation never falls back to a file. The production build removes the file-storage branch and returns 503 if D1 is absent.
 
 ## Build, run and verify
 
 ```sh
-npm install && npm run build
+npm run check
 npm test
+npm run build
 npm run test:smoke
-npm start
+npm run preview
 ```
 
-`npm run build` checks that committed JSON Schemas match their TypeScript definitions, validates content collections and builds static pages plus a standalone Node server. `npm start` serves the build, including static assets, POST endpoints and the server island; `npm run preview` is an alias. The configured listener is `127.0.0.1:4321`; HOST and PORT override it at runtime. `astro preview` alone is not the production deployment process. As with a standard Astro build, this transpiles TypeScript; it does not run a full standalone type check. Type-checking tools and Node type definitions are not added under the brief's dependency restriction.
+The build validates JSON Schemas and content collections, emits prerendered public pages in `dist/client`, and bundles the Worker in `dist/server`. `npm run check` runs `astro check`. `npm run preview` (also `npm start`) serves the build locally using Workers emulation; it is not a production server command. The `workerd` override pins the local runtime to `1.20261021.1`, which supports the configured compatibility date; the adapter's transitive runtime was older. Review that override when upgrading Wrangler/the adapter.
 
-Unit tests use Node's built-in runner and temporary directories. The smoke script starts the **built** server on a temporary loopback port with generated test secrets, exercises public pages, server-island output, protected APIs, nonce receipts and persistence, then deletes the temporary data. It does not contact a submitted endpoint or use your `.env`/real data.
+Tests use Node's built-in runner plus local D1 emulation to check concurrent quotas, duplicates, immutable claims, review rollback and all draft tables. The smoke test applies migrations in a temporary local database, starts the built Worker with generated test secrets, checks public pages/cache headers, server islands, protected APIs and persistence across a restart, then removes its temporary state. It does not use your `.dev.vars`, local development database, or submitted endpoints.
 
-For deployment, run one Node process, persist a private DATA_DIR outside `dist/client` and the web root, and terminate HTTPS at a configured reverse proxy. Back up the store. Do not run multiple workers against the JSON file. Set proxy body/connection/rate limits and preserve the correct request origin for same-origin checks. The app deliberately ignores untrusted forwarded-IP headers; behind a proxy, direct-peer limits may be shared. Configure a trusted boundary before public intake. Secrets should be injected by the service manager. Keep the deployed server and client output from the same build so encrypted server-island props remain compatible.
+## Deploy to Cloudflare Workers
+
+The only production target is **Cloudflare Workers with Workers Static Assets, D1 and R2**. No standalone Node process, local persistent volume, reverse proxy or Cloudflare Pages deployment is required.
+
+Before the first deploy:
+
+1. Ensure D1 database `owa-cms` and R2 bucket `owa-media` exist in the target Cloudflare account. Replace the all-zero `database_id` in `wrangler.jsonc` with the D1 UUID. Keep binding names `OWA_DB` and `OWA_MEDIA` unchanged.
+2. Configure independent `ADMIN_PASSWORD` and `SUBMISSION_SECRET` Worker secrets, each at least 32 characters, using the Cloudflare dashboard or your secret-management workflow. Public pages work without these; private functionality fails closed until they are set. These application secrets are separate from deployment credentials.
+3. The existing GitHub repository secrets **`CLOUDFLARE_API_TOKEN`** and **`CLOUDFLARE_ACCOUNT_ID`** authenticate CI. The token needs permissions to deploy Workers/assets, apply D1 migrations and bind R2 in that account.
+
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) runs on pushes to `main` and manual dispatch. It installs the lockfile, runs checks/tests, builds and smoke-tests the Worker, rejects the placeholder D1 UUID, applies `./migrations` to remote D1, then deploys with the locally installed Wrangler. Keep future migrations backward-compatible with the previous Worker because schema migration precedes deployment.
+
+For an already configured account, the equivalent release commands are:
+
+```sh
+npm ci
+npm run check
+npm test
+npm run build
+npm run test:smoke
+npx wrangler d1 migrations apply OWA_DB --remote --config dist/server/wrangler.json
+npm run deploy
+```
+
+The last two commands require credentials and modify Cloudflare; they were **not run** as part of this migration. For credential-free packaging verification, use `npm run deploy -- --dry-run` after building. Astro generates `dist/server/wrangler.json` and `.wrangler/deploy/config.json`; Wrangler follows this deployment redirect to upload the matching Worker and `dist/client` assets. Edit the root `wrangler.jsonc`, never generated files. The initial deployment uses the Worker's `workers.dev` address; configure `openweightarchive.com` as a custom domain in Cloudflare when ready.
+
+`public/_headers` gives `/_astro/*` a one-year immutable cache lifetime and public HTML a 60-second lifetime with revalidation. Middleware sets the corresponding short HTML policy on dynamic public responses; admin, API and server-island responses use `no-store`. Header rules for HTML and hashed assets are disjoint so Cloudflare does not combine conflicting Cache-Control values. Private D1 records are never static assets. Back up D1 according to the retention policy in [docs/SUBMISSIONS.md](docs/SUBMISSIONS.md). R2 is bound but the upload pipeline remains unimplemented.
 
 ## Routes and rendering
 
@@ -126,8 +155,10 @@ A review body is `{ "claimId": "<UUID from receipt>", "decision": "needs-informa
 
 ## Phase boundary and design documents
 
-[docs/DESIGN.md](docs/DESIGN.md) specifies tokens, typography, layout, components, accessibility and the written ink-line vault art direction. [docs/SUBMISSIONS.md](docs/SUBMISSIONS.md) specifies the signed nonce protocol, random 5% reproduction within 72 hours, pass criteria, rate limits, hardware tiers and Postgres migration boundary.
+[docs/DESIGN.md](docs/DESIGN.md) specifies tokens, typography, layout, components, accessibility and the written ink-line vault art direction. [docs/SUBMISSIONS.md](docs/SUBMISSIONS.md) specifies the signed nonce protocol, random 5% reproduction within 72 hours, pass criteria, rate limits, hardware tiers and D1 storage boundary.
 
-The reproduction worker, endpoint-control handshake, outbound-network sandbox, evidence uploads, scoring tolerances, automated publishing and verified badges are deliberately not implemented in this phase. The repository interface in `lib/server/store.ts` provides the seam for replacing the single-process JSON store with transactional Postgres later.
+The reproduction worker, endpoint-control handshake, outbound-network sandbox, evidence uploads, scoring tolerances, automated publishing and verified badges are deliberately not implemented in this phase. The repository interface in `lib/server/records.ts` is implemented by transactional D1 storage in `lib/server/d1-store.ts`, with SQLite migrations in `migrations/`. JSON storage is retained only for local development. Existing Phase 1 JSON data is not automatically imported; any import must preserve IDs, digests, nonces and review history and validate record counts before cutover.
 
-Astro implementation references: [content collections](https://docs.astro.build/en/guides/content-collections/), [server islands](https://docs.astro.build/en/guides/server-islands/) and [Node adapter](https://docs.astro.build/en/guides/integrations-guide/node/).
+Astro implementation references: [content collections](https://docs.astro.build/en/guides/content-collections/), [server islands](https://docs.astro.build/en/guides/server-islands/) and [Cloudflare adapter](https://docs.astro.build/en/guides/integrations-guide/cloudflare/).
+
+Platform references: [Workers static asset headers](https://developers.cloudflare.com/workers/static-assets/headers/), [D1 transactional batches](https://developers.cloudflare.com/d1/worker-api/d1-database/), and [D1 migrations](https://developers.cloudflare.com/d1/reference/migrations/).

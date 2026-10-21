@@ -1,0 +1,3 @@
+# Local Workers secrets only. Generate each separately: openssl rand -hex 32
+ADMIN_PASSWORD=
+SUBMISSION_SECRET=

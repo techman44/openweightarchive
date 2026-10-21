@@ -3,18 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.22.0" },
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "scripts": {
-    "dev": "node --env-file-if-exists=.env ./node_modules/astro/bin/astro.mjs dev",
+    "dev": "astro dev",
+    "dev:json": "node --env-file-if-exists=.dev.vars --env-file-if-exists=.env ./node_modules/astro/bin/astro.mjs dev --config astro.local.config.mjs",
+    "check": "astro check",
     "build": "node scripts/schemas.mjs --check && astro build",
-    "start": "node --env-file-if-exists=.env ./dist/server/entry.mjs",
-    "preview": "npm run start",
+    "start": "astro preview",
+    "preview": "astro preview",
+    "deploy": "wrangler deploy",
+    "cf:types": "wrangler types --include-runtime false --strict-vars false",
+    "db:migrate:local": "wrangler d1 migrations apply OWA_DB --local",
     "schemas": "node scripts/schemas.mjs",
     "test": "node --test tests/*.test.ts",
     "test:smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
-    "@astrojs/node": "11.1.9",
+    "@astrojs/cloudflare": "14.4.1",
     "astro": "7.4.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.11",
+    "@cloudflare/workers-types": "5.20261021.1",
+    "@types/node": "26.6.5",
+    "typescript": "6.0.3",
+    "wrangler": "4.151.3"
+  },
+  "overrides": {
+    "workerd": "1.20261021.1"
   }
 }

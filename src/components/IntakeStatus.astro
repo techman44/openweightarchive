@@ -1,6 +1,7 @@
 ---
 import { submissionSecret } from '../../lib/server/http';
+import { env } from 'cloudflare:workers';
 Astro.response.headers.set('Cache-Control', 'no-store');
-const configured = !!submissionSecret();
+const configured = !!submissionSecret(env) && (!!env.OWA_DB || import.meta.env.DEV);
 ---
 <p class="notice" role="status"><strong>{configured ? 'Claim intake is available.' : 'Claim intake is not configured.'}</strong> {configured ? 'A submission receives a signed receipt. Automated reproduction is not connected yet.' : 'You can inspect the form, but a claim cannot be saved until the operator enables intake.'}</p>

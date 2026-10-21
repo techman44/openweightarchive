@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { submissionSchema, reviewSchema } from '../lib/schemas.ts';
 import { loadRegisterFile } from '../lib/register.ts';
 import { createChallenge, verifyChallenge, digest } from '../lib/server/challenge.ts';
-import { createFileRepository } from '../lib/server/store.ts';
+import { createFileRepository } from '../lib/server/file-store.ts';
 import { readJSON, requireAdmin, requireSameOrigin } from '../lib/server/http.ts';
 
 const secret = 'test-secret-with-at-least-thirty-two-characters';
@@ -67,20 +67,13 @@ test('corrupt JSON is never replaced by an empty store', async () => {
 });
 
 test('admin auth fails closed, challenges missing auth and accepts only the configured credential', () => {
-  const previous = { password: process.env.ADMIN_PASSWORD, username: process.env.ADMIN_USERNAME };
-  try {
-    delete process.env.ADMIN_PASSWORD;
-    assert.equal(requireAdmin(new Request('http://localhost/admin'))?.status, 503);
-    process.env.ADMIN_PASSWORD = secret; process.env.ADMIN_USERNAME = 'test';
-    const denied = requireAdmin(new Request('http://localhost/admin'))!;
-    assert.equal(denied.status, 401);
-    assert.match(denied.headers.get('www-authenticate')!, /Basic/);
-    assert.equal(requireAdmin(new Request('http://localhost/admin', { headers: { Authorization: `Basic ${Buffer.from(`test:${secret}`).toString('base64')}` } })), undefined);
-    assert.equal(requireAdmin(new Request('http://localhost/admin', { headers: { Authorization: 'Basic bad' } }))?.status, 401);
-  } finally {
-    if (previous.password === undefined) delete process.env.ADMIN_PASSWORD; else process.env.ADMIN_PASSWORD = previous.password;
-    if (previous.username === undefined) delete process.env.ADMIN_USERNAME; else process.env.ADMIN_USERNAME = previous.username;
-  }
+  const env = { ADMIN_PASSWORD: secret, ADMIN_USERNAME: 'test' };
+  assert.equal(requireAdmin(new Request('http://localhost/admin'), {})?.status, 503);
+  const denied = requireAdmin(new Request('http://localhost/admin'), env)!;
+  assert.equal(denied.status, 401);
+  assert.match(denied.headers.get('www-authenticate')!, /Basic/);
+  assert.equal(requireAdmin(new Request('http://localhost/admin', { headers: { Authorization: `Basic ${Buffer.from(`test:${secret}`).toString('base64')}` } }), env), undefined);
+  assert.equal(requireAdmin(new Request('http://localhost/admin', { headers: { Authorization: 'Basic bad' } }), env)?.status, 401);
 });
 
 test('JSON intake rejects cross-origin, malformed, non-JSON and oversized bodies', async () => {
