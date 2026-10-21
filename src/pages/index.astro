@@ -2,24 +2,27 @@
 import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Register from '../components/Register.astro';
-import PostList from '../components/PostList.astro';
 import { registerRows } from '../../lib/register';
-const [models, benchmarks, posts] = await Promise.all([getCollection('models'), getCollection('benchmarks'), getCollection('posts')]);
-const rows = registerRows(benchmarks.map((entry) => entry.data), models.map((entry) => entry.data));
-const latest = posts.sort((a, b) => b.data.published.localeCompare(a.data.published)).slice(0, 3);
+const [models, benchmarks] = await Promise.all([getCollection('models'), getCollection('benchmarks')]);
+const rows = registerRows(benchmarks.map(entry => entry.data), models.map(entry => entry.data));
+const fastest = Math.max(...rows.filter(row => row.unit === 'tok/s' && row.score !== null).map(row => row.score!));
+const metrics = [
+  { value: String(models.length).padStart(2, '0'), label: 'Models tracked', note: '2 measured engine arms' },
+  { value: String(benchmarks.length).padStart(2, '0'), label: 'Benchmark runs', note: 'Archived suite records' },
+  { value: '00', label: 'Verified submissions', note: 'Community intake / none' },
+  { value: fastest.toFixed(1), label: 'Fastest tok/s', note: 'Structured / median of 3' },
+  { value: '—', label: 'HLE frontier', note: '2,158q / nightly scheduled' },
+];
+const queue = ['TensorFold 512K', 'Qwen3.8-27B NVFP4', 'Muse Glimmer 30B', 'Nemotron 3.5 Lightning', 'Nemotron 3.5 Bolt', 'Nemotron 3.5 SuperVL', 'GLM-5.3-Flash', 'gpt-oss-120b', 'Qwen3.5-35B-A3B'];
 ---
-<Layout title="The register">
-  <section class="hero" aria-labelledby="hero-title">
-    <div><p class="eyebrow">An independent model register</p><h1 id="hero-title">A record of<br />open weights.</h1><p class="lead">Models, measurements, and the conditions behind them. Collected with care. Open to scrutiny.</p></div>
-    <aside class="accession" aria-label="Archive contents"><p class="eyebrow">The collection / Phase 1</p><dl>
-      <div><dt>Sample models</dt><dd>0{models.length}</dd></div><div><dt>Recorded runs</dt><dd>0{benchmarks.length}</dd></div><div><dt>Editorial notes</dt><dd>0{posts.length}</dd></div>
-    </dl><p class="help">A working catalogue, with provenance kept beside every result.</p></aside>
-  </section>
-  <p class="notice"><strong>Scaffold edition.</strong> Models, specifications and benchmark scores are fictional sample data. No result has been verified.</p>
-  <section class="section" aria-labelledby="register-title">
-    <div class="section-heading"><div><p class="eyebrow">01 / The register</p><h2 id="register-title">Measurements, in context.</h2></div><a class="text-link" href="/benchmarks">Explore benchmarks <span aria-hidden="true">↗</span></a></div>
+<Layout title="Register">
+  <h1 class="sr-only">Model measurement register</h1>
+  <section class="kpi-strip" aria-label="Collection metrics">{metrics.map(metric => <div class="kpi"><span class="kpi-value">{metric.value}</span><span class="kpi-label">{metric.label}</span><span class="kpi-note">{metric.note}</span></div>)}</section>
+  <section id="register" class="register-section" aria-labelledby="register-title">
+    <div class="register-heading"><h2 id="register-title">Register</h2><span class="mono muted">ct-bench / snapshot 2026-10-21</span></div>
+    <p class="notice">Operator-verified measurements, not independent replication. Classics: partial coverage; coding and ARC re-running at 8,192 tokens. Speed summaries supplied by operator; source logs linked where available.</p>
     <Register rows={rows} />
   </section>
-  <section class="section" aria-labelledby="journal-title"><div class="section-heading"><div><p class="eyebrow">02 / From the journal</p><h2 id="journal-title">Notes from the archive.</h2></div><a class="text-link" href="/blog">All entries <span aria-hidden="true">↗</span></a></div><PostList posts={latest} /></section>
-  <section class="principle"><div><p class="eyebrow">Our standard</p><h2 style="margin-top: 1rem">A score is a claim until it can be repeated.</h2></div><div><p>A model name and a number are only the beginning. We record the configuration, hardware, task and sample count so the result can be examined on its own terms.</p><a class="text-link" href="/blog/how-we-record-a-score">Read the recording method <span aria-hidden="true">↗</span></a></div></section>
+  <section class="section" aria-labelledby="queue-title"><div class="register-heading"><h2 id="queue-title">Evaluation queue</h2><span class="muted">No scores until completed</span></div><ul class="queue-list">{queue.map(name => <li><span>{name}</span><span class="status">queued</span><span class="mono muted">—</span></li>)}</ul>
+  <p class="help">HLE / 2,158 questions / text-only. Nightly schedule begins 21 October; no completed frontier score published.</p></section>
 </Layout>

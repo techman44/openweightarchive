@@ -16,17 +16,34 @@
       "type": "object",
       "properties": {
         "thinking": {
-          "type": "boolean"
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "max_gen_toks": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 1048576
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1048576
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "temperature": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 10
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -56,6 +73,29 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 9007199254740991
+          },
+          "stderr": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "partial",
+              "re-running",
+              "queued",
+              "scheduled",
+              "pass"
+            ]
+          },
+          "note": {
+            "type": "string"
           }
         },
         "required": [
@@ -64,6 +104,50 @@
         ],
         "additionalProperties": false
       }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "kv": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "source": {
+          "type": "string"
+        },
+        "raw": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "engine",
+        "image",
+        "kv",
+        "context",
+        "source",
+        "raw",
+        "note"
+      ],
+      "additionalProperties": false
     },
     "ts": {
       "type": "string",

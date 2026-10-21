@@ -1,0 +1,40 @@
+{
+  "arm": "ARM 1 / styles01",
+  "suite": "Decode speed",
+  "metrics": {
+    "code": {
+      "score": 91.2,
+      "n": 3,
+      "unit": "tok/s",
+      "status": "verified"
+    },
+    "prose": {
+      "score": 49.5,
+      "n": 3,
+      "unit": "tok/s",
+      "status": "verified"
+    },
+    "structured": {
+      "score": 102.0,
+      "n": 3,
+      "unit": "tok/s",
+      "status": "verified"
+    }
+  },
+  "config": {
+    "thinking": true,
+    "max_gen_toks": 512,
+    "temperature": 0
+  },
+  "evidence": {
+    "engine": "styles01 vLLM + TensorFlash",
+    "image": "ghcr.io/styles01/dsv41-1017-exl3-2x-dgx-sparks:v2",
+    "kv": "2.68 GB / rank",
+    "context": "262K server context; vision on",
+    "source": "Operator-verified summary supplied 2026-10-21",
+    "raw": "/fixtures/styles01-speed.json",
+    "note": "Median of 3 greedy 512-token trials. Original per-trial speed artifact not located; timestamp is archive date, not execution time."
+  },
+  "ts": "2026-10-21T00:00:00Z",
+  "hardware": "2 \u00d7 NVIDIA DGX Spark / TP2 / EXL3 2.9bpw"
+}

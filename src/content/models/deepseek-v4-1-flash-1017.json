@@ -1,0 +1,14 @@
+{
+  "slug": "deepseek-v4-1-flash-1017",
+  "name": "DeepSeek-V4.1-Flash-1017",
+  "publisher": "DeepSeek",
+  "parameters": "Not recorded",
+  "summary": "EXL3 2.9bpw on two DGX Sparks (TP2). Styles01 vLLM + TensorFlash and MiaAI kit are separate engine arms using the same weights. Vision enabled on the styles01 arm.",
+  "license": {
+    "name": "Not archived",
+    "notes": "The exact upstream license and revision have not yet been archived. No license claim is made here."
+  },
+  "contextTokens": 262144,
+  "fixture": false,
+  "quantizations": []
+}

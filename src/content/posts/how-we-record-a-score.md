@@ -21,6 +21,6 @@ Only a passing reproduction can support a verified label. A small subset is a ch
 
 ## The current edition
 
-Phase 1 provides sample records, submission intake and an editorial queue. The automated reproduction service is not connected. No submitted score can receive verified status in this edition.
+The dashboard distinguishes operator-verified archived measurements from community submissions. Source artifacts are linked when available; operator-only summaries are labelled. The automated reproduction service is not connected, so no community submission can receive verified status in this edition.
 
 [Inspect the benchmark register](/benchmarks) or [submit a claim](/submit).

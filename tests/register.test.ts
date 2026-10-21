@@ -5,8 +5,8 @@ import { loadRegisterFile, parseRun, registerRows } from '../lib/register.ts';
 import { modelSchema } from '../lib/schemas.ts';
 import { compareValues } from '../lib/sort.ts';
 
-const run = await loadRegisterFile(new URL('../fixtures/reference-8b.json', import.meta.url));
-const model = modelSchema.parse(JSON.parse(await readFile(new URL('../src/content/models/reference-8b.json', import.meta.url), 'utf8')));
+const run = await loadRegisterFile(new URL('../tests/fixtures/run-reference-8b.json', import.meta.url));
+const model = modelSchema.parse(JSON.parse(await readFile(new URL('./fixtures/reference-8b.json', import.meta.url), 'utf8')));
 
 test('ct-bench loader preserves config, raw scores and all task sample counts', () => {
   const rows = registerRows([{ slug: 'test-run', model: model.slug, provenance: 'fixture', run }], [model]);

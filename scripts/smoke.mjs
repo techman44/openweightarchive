@@ -36,7 +36,7 @@ async function smoke(directory) {
     name: built.name, compatibility_date: built.compatibility_date, compatibility_flags: built.compatibility_flags,
     main: resolve('dist/server', built.main), no_bundle: true, rules: built.rules,
     assets: { ...built.assets, directory: resolve('dist/server', built.assets.directory) },
-    d1_databases: built.d1_databases.map((db) => ({ ...db, migrations_dir: resolve('migrations') })),
+    d1_databases: [{ binding: 'OWA_DB', database_name: 'owa-smoke-local', database_id: '00000000-0000-0000-0000-000000000001', migrations_dir: resolve('migrations') }],
     r2_buckets: built.r2_buckets, vars: { ADMIN_USERNAME: 'test' },
   };
   await writeFile(configPath, JSON.stringify(config));
@@ -71,7 +71,7 @@ async function smoke(directory) {
   });
   try {
     await ready();
-    for (const path of ['/', '/benchmarks', '/models/reference-8b', '/models/reference-14b', '/models/reference-32b', '/blog', '/blog/how-we-record-a-score', '/blog/reading-a-memory-estimate', '/blog/why-an-archive', '/submit']) {
+    for (const path of ['/', '/benchmarks', '/models/deepseek-v4-1-flash-1017', '/blog', '/blog/how-we-record-a-score', '/blog/reading-a-memory-estimate', '/blog/why-an-archive', '/submit']) {
       const response = await fetch(base + path);
       assert.equal(response.status, 200, path);
       assert.equal(response.headers.get('cache-control'), 'public, max-age=60, must-revalidate', path);
@@ -107,7 +107,7 @@ async function smoke(directory) {
     assert.equal(admin.headers.get('cache-control'), 'no-store');
     assert.match(await admin.text(), /Admin stub/);
 
-    const run = JSON.parse(await readFile(new URL('../fixtures/reference-8b.json', import.meta.url), 'utf8'));
+    const run = JSON.parse(await readFile(new URL('../tests/fixtures/run-reference-8b.json', import.meta.url), 'utf8'));
     const claim = { submitter: 'Smoke test', model: 'reference-8b', endpoint: 'https://inference.example.com/v1', attestation: 'self-reported', run, consent: true };
     assert.equal((await post('/api/submissions', { ...claim, status: 'verified' })).status, 400);
     assert.equal((await post('/api/submissions', claim, false, { Origin: 'https://evil.example' })).status, 403);
@@ -123,7 +123,7 @@ async function smoke(directory) {
     const review = await post('/api/admin/reviews', { claimId: receipt.id, decision: 'needs-information', note: 'Please supply revision.' }, true);
     assert.equal(review.status, 200);
     assert.equal((await review.json()).status, 'needs-information');
-    const model = JSON.parse(await readFile(new URL('../src/content/models/reference-8b.json', import.meta.url), 'utf8'));
+    const model = JSON.parse(await readFile(new URL('../tests/fixtures/reference-8b.json', import.meta.url), 'utf8'));
     const draft = await post('/api/admin/drafts', { collection: 'models', data: model }, true);
     assert.equal(draft.status, 201);
     // A fresh Worker instance must read the same D1 state and duplicate/quota history.

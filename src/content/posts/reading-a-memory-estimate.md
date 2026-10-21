@@ -17,4 +17,4 @@ An estimate helps plan a trial. It is not a promise that a particular device can
 
 The reference records contain deliberate gaps. An unavailable value stays visible as unavailable instead of being inferred from another quantization or replaced with a zero.
 
-All models and memory figures in this first edition are fictional examples of the record format. They are not hardware purchasing guidance.
+The current Spark record reports a 2.68 GB KV cache per rank. It does not establish total VRAM requirements at other context lengths. Missing memory measurements remain unavailable; no extrapolated memory matrix is published.

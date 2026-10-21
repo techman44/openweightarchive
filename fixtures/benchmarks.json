@@ -1,5 +1,26 @@
 [
-  { "slug": "reference-8b-q4", "model": "reference-8b", "provenance": "fixture", "file": "reference-8b.json" },
-  { "slug": "reference-14b-q4", "model": "reference-14b", "provenance": "fixture", "file": "reference-14b.json" },
-  { "slug": "reference-32b-q4", "model": "reference-32b", "provenance": "fixture", "file": "reference-32b.json" }
+  {
+    "slug": "styles01-speed",
+    "model": "deepseek-v4-1-flash-1017",
+    "provenance": "verified",
+    "file": "styles01-speed.json"
+  },
+  {
+    "slug": "miaai-speed",
+    "model": "deepseek-v4-1-flash-1017",
+    "provenance": "verified",
+    "file": "miaai-speed.json"
+  },
+  {
+    "slug": "styles01-classics",
+    "model": "deepseek-v4-1-flash-1017",
+    "provenance": "partial",
+    "file": "styles01-classics.json"
+  },
+  {
+    "slug": "styles01-needle",
+    "model": "deepseek-v4-1-flash-1017",
+    "provenance": "verified",
+    "file": "styles01-needle.json"
+  }
 ]

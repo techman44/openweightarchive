@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import IntakeStatus from '../components/IntakeStatus.astro';
-import sample from '../../fixtures/reference-8b.json';
+import sample from '../../fixtures/styles01-speed.json';
 ---
 <Layout title="Submit a score">
   <header class="page-intro"><p class="eyebrow">Contribute to the record</p><h1>Submit a claim.</h1><p class="lead">Share the run, its conditions and an endpoint where it can be reproduced. Every submission begins as an unverified claim.</p></header>
@@ -15,7 +15,7 @@ import sample from '../../fixtures/reference-8b.json';
         <label for="attestation">Requested hardware attestation tier<select id="attestation" name="attestation"><option value="self-reported">Self-reported</option><option value="photo">Photo evidence (review required)</option><option value="witnessed-remote">Witnessed remote session (review required)</option></select></label>
         <p class="help">Selecting a tier requests review; it does not award that tier. Do not paste evidence containing credentials or identifying details.</p>
       </fieldset>
-      <fieldset class="stack"><legend>02 / The ct-bench record</legend><label for="run">Run JSON<textarea id="run" name="run" rows="17" required spellcheck="false" class="mono" aria-describedby="run-help" placeholder={JSON.stringify(sample, null, 2)}></textarea></label><p class="help" id="run-help">Include arm, suite, config (thinking, max_gen_toks, temperature), task metrics (score, n), ts and hardware. The placeholder is a fictional example; replace it with your own complete record.</p></fieldset>
+      <fieldset class="stack"><legend>02 / The ct-bench record</legend><label for="run">Run JSON<textarea id="run" name="run" rows="17" required spellcheck="false" class="mono" aria-describedby="run-help" placeholder={JSON.stringify(sample, null, 2)}></textarea></label><p class="help" id="run-help">Include arm, suite, config (thinking, max_gen_toks, temperature), task metrics (score, n), ts and hardware. The placeholder is an archived speed record; replace it with your own complete record.</p></fieldset>
       <label class="check-label"><input type="checkbox" name="consent" required /><span>I control this endpoint and permit a future ct-bench reproduction of this claim. I understand that the score and requested hardware tier remain unverified.</span></label>
       <div><button type="submit" class="primary" disabled>Record claim <span aria-hidden="true">↗</span></button></div>
       <noscript><p class="notice">JavaScript is required to submit this JSON form. The submission API is also available to command-line clients; see the repository README.</p></noscript>

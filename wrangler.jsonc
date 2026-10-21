@@ -2,6 +2,10 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "openweightarchive",
   "main": "@astrojs/cloudflare/entrypoints/server",
+  "routes": [
+    { "pattern": "openweightarchive.com", "zone_name": "openweightarchive.com", "custom_domain": true },
+    { "pattern": "www.openweightarchive.com", "zone_name": "openweightarchive.com", "custom_domain": true }
+  ],
   "compatibility_date": "2026-10-21",
   "compatibility_flags": ["nodejs_compat"],
   // Astro's Cloudflare Vite plugin supplies the built assets directory and entrypoint.

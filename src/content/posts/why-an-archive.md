@@ -15,4 +15,4 @@ Access to weights is one fact about a model. What its license permits is another
 
 ## Keep the first edition honest
 
-This scaffold has three fictional model records and three editorial notes. It contains no measured benchmark results and no reported news. These examples establish the structure into which reviewed material can later be published.
+The register now contains operator-verified DeepSeek-V4.1-Flash-1017 measurements on two DGX Sparks. Styles01 and MiaAI kit are separate engine arms, not separate models. The classics suite remains partial; pending evaluations are not assigned scores.

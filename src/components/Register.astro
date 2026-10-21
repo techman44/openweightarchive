@@ -1,71 +1,102 @@
 ---
 import type { RegisterRow } from '../../lib/register';
+import manifest from '../../fixtures/benchmarks.json';
 interface Props { rows: RegisterRow[]; id?: string; }
 const { rows, id = 'register' } = Astro.props;
-const suites = [...new Set(rows.map((row) => row.suite))];
-const columns = [
-  ['model', 'Model / run', false], ['task', 'Task / suite', false], ['score', 'Score', true],
-  ['n', 'Samples', true], ['config', 'Run details', false], ['ts', 'Recorded', false], ['provenance', 'Evidence', false],
-] as const;
+const suites = [...new Set(rows.map(row => row.suite))];
+const columns = [['model', 'Model / arm', false], ['task', 'Task / suite', false], ['score', 'Score', true], ['n', 'n', true], ['ts', 'Recorded UTC', false]] as const;
+const fixture = (row: RegisterRow) => manifest.find(entry => row.id.startsWith(`${entry.slug}:`))?.file;
 ---
 <section data-register aria-label="Benchmark register">
   <div class="register-tools" data-tools hidden>
-    <label for={`${id}-search`}>Search the register<input id={`${id}-search`} type="search" data-search placeholder="Model, task, hardware…" /></label>
-    <label for={`${id}-suite`}>Suite<select id={`${id}-suite`} data-suite><option value="">All suites</option>{suites.map((suite) => <option value={suite}>{suite}</option>)}</select></label>
+    <label for={`${id}-search`}>Search<input id={`${id}-search`} type="search" data-search placeholder="Model, task, hardware…" /></label>
+    <label for={`${id}-suite`}>Suite<select id={`${id}-suite`} data-suite><option value="">All suites</option>{suites.map(suite => <option value={suite}>{suite}</option>)}</select></label>
     <p class="mono muted" data-count aria-live="polite">{rows.length} task records</p>
   </div>
   <div class="table-scroll" role="region" aria-label="Benchmark records, scroll horizontally for all columns" tabindex="0">
     <table>
-      <caption>Raw scores from ct-bench. Compare only the same task, suite and configuration. Unavailable is never zero. Dates are UTC.</caption>
-      <thead><tr>{columns.map(([key, title, numeric]) => <th scope="col" class:list={[numeric && 'numeric']} aria-sort={key === 'ts' ? 'descending' : undefined}>
-        <span data-static-heading>{title}</span><button type="button" data-sort={key} data-numeric={numeric} hidden>{title}<span class="sr-only">{key === 'config' ? ': sort by maximum generated tokens' : ': sort'}</span></button>
-      </th>)}</tr></thead>
-      <tbody>{rows.map((row) => <tr data-search-text={`${row.model} ${row.task} ${row.suite} ${row.hardware} ${row.arm}`.toLowerCase()} data-suite-name={row.suite}>
-        <th scope="row" data-value={row.model}><a href={`/models/${row.modelSlug}`}>{row.model}</a><span class="cell-sub mono">{row.arm.replace(`${row.modelSlug}-`, '')}</span></th>
-        <td data-value={`${row.task} ${row.suite}`}>{row.task}<span class="cell-sub mono">{row.suite}</span></td>
-        <td class="numeric score" data-value={row.score ?? ''}>{row.score === null ? <span class="cell-sub">Unavailable</span> : row.score.toFixed(3)}</td>
-        <td class="numeric mono" data-value={row.n}>{row.n.toLocaleString('en-AU')}</td>
-        <td class="run-details" data-value={row.config.max_gen_toks}><details><summary>{row.config.thinking ? 'Thinking on' : 'Thinking off'} · {row.config.max_gen_toks.toLocaleString('en-AU')} tokens</summary><dl>
-          <div><dt>Arm</dt><dd>{row.arm}</dd></div><div><dt>Temperature</dt><dd>{row.config.temperature}</dd></div><div><dt>Maximum generated tokens</dt><dd>{row.config.max_gen_toks}</dd></div><div><dt>Hardware (self-reported)</dt><dd>{row.hardware}</dd></div><div><dt>Recorded (UTC)</dt><dd><time datetime={row.ts}>{row.ts}</time></dd></div>
-        </dl></details></td>
-        <td data-value={row.ts}><time class="mono" datetime={row.ts}>{row.ts.slice(0, 10)}</time></td>
-        <td data-value={row.provenance}><span class="status">{row.provenance === 'fixture' ? 'Sample fixture' : 'Claim'}</span></td>
-      </tr>)}</tbody>
+      <caption>Raw ct-bench scores. Compare only matching tasks, suites and configurations. Select 2–3 records for comparison.</caption>
+      <thead><tr><th scope="col"><span class="sr-only">Compare</span></th>{columns.map(([key, title, numeric]) => <th scope="col" class:list={[numeric && 'numeric']} aria-sort={key === 'ts' ? 'descending' : undefined}><span data-static-heading>{title}</span><button type="button" data-sort={key} data-numeric={numeric} hidden>{title}<span class="sr-only">: sort</span></button></th>)}<th scope="col">Evidence</th></tr></thead>
+      {rows.map((row, index) => <tbody data-record data-search-text={`${row.model} ${row.task} ${row.suite} ${row.hardware} ${row.arm}`.toLowerCase()} data-suite-name={row.suite} data-label={`${row.arm} / ${row.task}`} data-unit={row.unit} data-score={row.score ?? ''} data-task={row.task} data-config={JSON.stringify(row.config)}>
+        <tr class="record-row">
+          <td class="select-cell"><label class="select-target"><input type="checkbox" data-compare aria-label={`Compare ${row.model}, ${row.arm}, ${row.task}`} disabled={row.score === null} /><span class="sr-only">Compare</span></label></td>
+          <th scope="row" data-value={row.model}><a href={`/models/${row.modelSlug}`}>{row.model}</a><span class="cell-sub mono">{row.arm.replace(`${row.modelSlug}-`, '')}</span></th>
+          <td data-value={`${row.task} ${row.suite}`}>{row.task}<span class="cell-sub mono">{row.suite}</span></td>
+          <td class="numeric score" data-value={row.score ?? ''}>{row.score === null ? '—' : row.score.toFixed(row.unit === 'tok/s' || row.unit === 's' ? 1 : 2)}<span class="cell-sub">{row.unit} / <span class:list={[['verified', 'pass'].includes(row.status) && 'verified']}>{row.status}</span></span></td>
+          <td class="numeric" data-value={row.n || ''}>{row.n || '—'}</td>
+          <td data-value={row.ts}><time class="mono" datetime={row.ts}>{row.ts.slice(0, 10)}</time></td>
+          <td><button class="evidence-toggle" data-evidence aria-expanded="false" aria-controls={`${id}-evidence-${index}`} hidden><span class="sr-only">Open evidence: </span>{row.provenance} <span aria-hidden="true">+</span></button><noscript><a href={`/fixtures/${fixture(row)}`}>Raw fixture</a></noscript></td>
+        </tr>
+        <tr class="drawer-row" id={`${id}-evidence-${index}`} hidden><td colspan="7"><div class="evidence-drawer">
+          <div class="drawer-heading"><h3>Run evidence</h3><span class="mono muted">{row.arm}</span></div>
+          <dl class="config-grid"><div><dt>Engine</dt><dd>{row.evidence?.engine ?? 'Not recorded'}</dd></div><div><dt>Image tag</dt><dd>{row.evidence?.image ?? 'Not recorded'}</dd></div><div><dt>Thinking</dt><dd>{row.config.thinking === null ? 'Not recorded' : row.config.thinking ? 'On' : 'Off'}</dd></div><div><dt>max_gen_toks</dt><dd>{row.config.max_gen_toks ?? 'Not recorded'}</dd></div><div><dt>KV cache</dt><dd>{row.evidence?.kv ?? 'Not recorded'}</dd></div><div><dt>Temperature</dt><dd>{row.config.temperature ?? 'Not recorded'}</dd></div></dl>
+          <div class="drawer-bottom"><div><p class="muted">Per-task measurements</p><table class="task-table"><thead><tr><th>Task</th><th>Score</th><th>n</th><th>stderr</th></tr></thead><tbody>{rows.filter(other => other.arm === row.arm && other.suite === row.suite && other.ts === row.ts).map(other => <tr><th>{other.task}</th><td>{other.score?.toFixed(2) ?? other.status} {other.unit}</td><td>{other.n || '—'}</td><td>{other.stderr?.toFixed(3) ?? 'Not recorded'}</td></tr>)}</tbody></table></div><div class="hardware"><p class="muted">Hardware / self-reported</p><p>{row.hardware}</p><p>{row.evidence?.context}</p><p>{row.evidence?.source}</p><p>{row.evidence?.note} {row.note}</p><time class="mono muted" datetime={row.ts}>{row.ts}</time><a href={`/fixtures/${fixture(row)}`}>Normalized JSON</a>{row.evidence && <a href={row.evidence.raw}>Source evidence</a>}</div></div>
+        </div></td></tr>
+      </tbody>)}
     </table>
   </div>
   <p class="empty-state muted" data-empty hidden>No records match these filters. Try another model or suite.</p>
-  <noscript><p class="help">All records are shown. Enable JavaScript to search and sort the table.</p></noscript>
+  <noscript><p class="help">All records are shown. Raw fixtures include the full evidence. Enable JavaScript to search, sort, expand and compare.</p></noscript>
+  <aside class="compare-tray" data-tray hidden aria-label="Selected record comparison"><div class="compare-heading"><h2>Compare records</h2><button type="button" data-clear>Clear selection</button></div><p data-comparison-note class="help" aria-live="polite"></p><div data-bars class="compare-bars"></div></aside>
+  <p class="help selection-help" data-selection aria-live="polite"></p>
 </section>
 <script>
-  import { compareValues } from '../../lib/sort';
-  document.querySelectorAll<HTMLElement>('[data-register]').forEach((register) => {
-    const body = register.querySelector('tbody')!;
-    const rows = Array.from(body.rows);
-    const search = register.querySelector<HTMLInputElement>('[data-search]')!;
-    const suite = register.querySelector<HTMLSelectElement>('[data-suite]')!;
-    register.querySelector<HTMLElement>('[data-tools]')!.hidden = false;
-    const update = () => {
-      const term = search.value.trim().toLowerCase();
-      rows.forEach((row) => { row.hidden = !row.dataset.searchText!.includes(term) || !!suite.value && row.dataset.suiteName !== suite.value; });
-      const count = rows.filter((row) => !row.hidden).length;
-      register.querySelector('[data-count]')!.textContent = `${count} of ${rows.length} task records`;
-      register.querySelector<HTMLElement>('[data-empty]')!.hidden = count !== 0;
-    };
-    search.addEventListener('input', update);
-    suite.addEventListener('change', update);
-    register.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((button, index) => {
-      button.hidden = false;
-      (button.previousElementSibling as HTMLElement).hidden = true;
-      button.addEventListener('click', () => {
-        const heading = button.closest('th')!;
-        const direction = heading.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
-        register.querySelectorAll('[aria-sort]').forEach((cell) => cell.removeAttribute('aria-sort'));
-        heading.setAttribute('aria-sort', direction === 1 ? 'ascending' : 'descending');
-        rows.sort((a, b) => compareValues(a.cells[index].dataset.value ?? '', b.cells[index].dataset.value ?? '', button.dataset.numeric === 'true', direction));
-        body.append(...rows);
-        update();
-        register.querySelector('[data-count]')!.textContent += `; sorted by ${button.dataset.sort}, ${direction === 1 ? 'ascending' : 'descending'}`;
-      });
+import { compareValues } from '../../lib/sort';
+document.querySelectorAll<HTMLElement>('[data-register]').forEach(register => {
+  const table = register.querySelector('table')!;
+  const rows = Array.from(register.querySelectorAll<HTMLTableSectionElement>('[data-record]'));
+  const search = register.querySelector<HTMLInputElement>('[data-search]')!;
+  const suite = register.querySelector<HTMLSelectElement>('[data-suite]')!;
+  register.querySelector<HTMLElement>('[data-tools]')!.hidden = false;
+  const update = () => {
+    rows.forEach(row => { row.hidden = !row.dataset.searchText!.includes(search.value.trim().toLowerCase()) || !!suite.value && row.dataset.suiteName !== suite.value; });
+    const count = rows.filter(row => !row.hidden).length;
+    register.querySelector('[data-count]')!.textContent = `${count} / ${rows.length} records`;
+    register.querySelector<HTMLElement>('[data-empty]')!.hidden = count !== 0;
+  };
+  search.addEventListener('input', update); suite.addEventListener('change', update);
+  register.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((button, index) => {
+    button.hidden = false; (button.previousElementSibling as HTMLElement).hidden = true;
+    button.addEventListener('click', () => {
+      const heading = button.closest('th')!;
+      const direction = heading.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+      register.querySelectorAll('[aria-sort]').forEach(cell => cell.removeAttribute('aria-sort'));
+      heading.setAttribute('aria-sort', direction === 1 ? 'ascending' : 'descending');
+      rows.sort((a, b) => compareValues(a.rows[0].cells[index + 1].dataset.value ?? '', b.rows[0].cells[index + 1].dataset.value ?? '', button.dataset.numeric === 'true', direction));
+      table.append(...rows); update();
     });
   });
+  register.querySelectorAll<HTMLButtonElement>('[data-evidence]').forEach(button => {
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      const open = button.getAttribute('aria-expanded') !== 'true';
+      button.setAttribute('aria-expanded', String(open));
+      document.getElementById(button.getAttribute('aria-controls')!)!.hidden = !open;
+      button.querySelector('[aria-hidden]')!.textContent = open ? '−' : '+';
+    });
+  });
+  const boxes = Array.from(register.querySelectorAll<HTMLInputElement>('[data-compare]'));
+  const compare = () => {
+    const selected = rows.filter(row => row.querySelector<HTMLInputElement>('[data-compare]')!.checked);
+    boxes.forEach(box => { box.disabled = box.closest<HTMLElement>('[data-record]')!.dataset.score === '' || selected.length >= 3 && !box.checked; });
+    register.querySelector('[data-selection]')!.textContent = selected.length ? `${selected.length} selected. Select 2–3 records; clear selection to start again.` : '';
+    register.querySelector<HTMLElement>('[data-tray]')!.hidden = selected.length < 2;
+    const bars = register.querySelector('[data-bars]')!; bars.replaceChildren();
+    const sameUnits = selected.every(row => row.dataset.unit === selected[0].dataset.unit);
+    const max = Math.max(...selected.map(row => Math.abs(Number(row.dataset.score))), 0.00001);
+    const matching = selected.every(row => row.dataset.task === selected[0].dataset.task && row.dataset.suiteName === selected[0].dataset.suiteName && row.dataset.config === selected[0].dataset.config && row.dataset.unit === selected[0].dataset.unit);
+    register.querySelector('[data-comparison-note]')!.textContent = `${matching ? 'Matching task, suite and configuration.' : 'Different tasks or configurations: not a like-for-like ranking.'} ${sameUnits ? 'Bars show magnitude relative to the largest selection, not a ranking; seconds are lower-is-better.' : 'Bars hidden: mixed units cannot share a scale.'}`;
+    selected.forEach(row => {
+      const item = document.createElement('div'); item.className = 'compare-item';
+      const label = document.createElement('span'); label.textContent = row.dataset.label!;
+      const value = document.createElement('span'); value.className = 'mono'; value.textContent = `${Number(row.dataset.score).toFixed(2)} ${row.dataset.unit}`;
+      const track = document.createElement('div'); track.className = 'bar-track';
+      const bar = document.createElement('div'); bar.className = 'bar-fill'; bar.style.width = `${Math.abs(Number(row.dataset.score)) / max * 100}%`;
+      track.append(bar); item.append(label, value); if (sameUnits) item.append(track); bars.append(item);
+    });
+  };
+  boxes.forEach(box => box.addEventListener('change', compare));
+  register.querySelector('[data-clear]')!.addEventListener('click', () => { boxes.forEach(box => box.checked = false); compare(); boxes.find(box => !box.disabled)?.focus(); });
+  update();
+});
 </script>

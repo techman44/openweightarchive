@@ -2,7 +2,7 @@
 
 Cloudflare Workers scaffold for **openweightarchive.com**: a dark, editorial model archive built with Astro, plain CSS and native browser scripts. This implements [BRIEF.md](BRIEF.md); it is not a production benchmark verification service.
 
-All three model records, their specifications and benchmark scores are **fictional fixtures**. Journal entries explain the proposed methods, not current AI news. Submitted scores remain unverified claims. No image assets have been generated.
+The design-v2 register contains real DeepSeek-V4.1-Flash-1017 measurements across styles01 and MiaAI kit engine arms. Source provenance, missing fields and partial/rerunning states are explicit. Community submissions remain unverified claims. Fictional examples live under tests/fixtures only. See docs/BENCHMARK-DATA.md for evidence and preview deployment details.
 
 ## Local development
 
@@ -127,7 +127,7 @@ Create a local payload using the fictional fixture (test data only):
 ```sh
 node --input-type=module -e '
 import { readFileSync, writeFileSync } from "node:fs";
-const run = JSON.parse(readFileSync("fixtures/reference-8b.json", "utf8"));
+const run = JSON.parse(readFileSync("tests/fixtures/run-reference-8b.json", "utf8"));
 writeFileSync("/tmp/archive-claim.json", JSON.stringify({
   submitter: "local-test", model: "reference-8b",
   endpoint: "https://inference.example.com/v1",
@@ -145,7 +145,7 @@ Admin draft payloads have the shape `{ "collection": "models", "data": { ...mode
 node --input-type=module -e '
 import { readFileSync, writeFileSync } from "node:fs";
 writeFileSync("/tmp/archive-draft.json", JSON.stringify({
-  collection: "models", data: JSON.parse(readFileSync("src/content/models/reference-8b.json", "utf8"))
+  collection: "models", data: JSON.parse(readFileSync("tests/fixtures/reference-8b.json", "utf8"))
 }));'
 curl --fail-with-body --user archivist http://localhost:4321/api/admin/drafts \
   -H 'Content-Type: application/json' --data-binary @/tmp/archive-draft.json

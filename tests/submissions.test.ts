@@ -11,7 +11,7 @@ import { createFileRepository } from '../lib/server/file-store.ts';
 import { readJSON, requireAdmin, requireSameOrigin } from '../lib/server/http.ts';
 
 const secret = 'test-secret-with-at-least-thirty-two-characters';
-const run = await loadRegisterFile(new URL('../fixtures/reference-8b.json', import.meta.url));
+const run = await loadRegisterFile(new URL('../tests/fixtures/run-reference-8b.json', import.meta.url));
 const input = submissionSchema.parse({ submitter: 'Test', model: 'reference-8b', endpoint: 'https://inference.example.com/v1', attestation: 'self-reported', run, consent: true });
 
 test('challenge binds the full declaration, has a 72h lifetime, and rejects tampering/expiry', () => {

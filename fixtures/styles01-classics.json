@@ -1,0 +1,64 @@
+{
+  "arm": "ARM 1 / styles01",
+  "suite": "Classics",
+  "metrics": {
+    "gsm8k / flexible-extract": {
+      "score": 94.31387414708112,
+      "n": 1319,
+      "stderr": 0.6378790242099631,
+      "unit": "%",
+      "status": "verified"
+    },
+    "math500 / math_verify": {
+      "score": 60.0,
+      "n": 500,
+      "stderr": 2.1930844120728583,
+      "unit": "%",
+      "status": "verified"
+    },
+    "ifeval / prompt-strict": {
+      "score": 51.386321626617374,
+      "n": 541,
+      "stderr": 2.15083020678561,
+      "unit": "%",
+      "status": "verified"
+    },
+    "humaneval": {
+      "score": null,
+      "n": 0,
+      "unit": "%",
+      "status": "re-running",
+      "note": "Pending re-run with max_gen_toks=8192; invalid 1024-token coding/ARC results excluded."
+    },
+    "mbpp": {
+      "score": null,
+      "n": 0,
+      "unit": "%",
+      "status": "re-running",
+      "note": "Pending re-run with max_gen_toks=8192; invalid 1024-token coding/ARC results excluded."
+    },
+    "ARC": {
+      "score": null,
+      "n": 0,
+      "unit": "%",
+      "status": "re-running",
+      "note": "Pending re-run with max_gen_toks=8192; invalid 1024-token coding/ARC results excluded."
+    }
+  },
+  "config": {
+    "thinking": true,
+    "max_gen_toks": 1024,
+    "temperature": 0
+  },
+  "evidence": {
+    "engine": "styles01 vLLM + TensorFlash",
+    "image": "ghcr.io/styles01/dsv41-1017-exl3-2x-dgx-sparks:v2",
+    "kv": "2.68 GB / rank",
+    "context": "262K server context; vision on",
+    "source": "Fresh ct-bench lm-eval artifact",
+    "raw": "/evidence/classics-1024.json",
+    "note": "Completed 1024-token run; harness context 16,384. Displayed scores and stderr are percentages. Coding and ARC are re-running at 8192, not zero."
+  },
+  "ts": "2026-10-21T02:18:05.924996Z",
+  "hardware": "2 \u00d7 NVIDIA DGX Spark / TP2 / EXL3 2.9bpw"
+}

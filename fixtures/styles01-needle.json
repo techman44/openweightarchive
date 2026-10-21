@@ -1,0 +1,29 @@
+{
+  "arm": "ARM 1 / styles01",
+  "suite": "Long context",
+  "metrics": {
+    "needle / 194,871 tokens / depth 60%": {
+      "score": 100.6,
+      "n": 1,
+      "unit": "s",
+      "status": "pass",
+      "note": "PASS: violet-harbor-7291 recovered. Total elapsed time; lower is faster."
+    }
+  },
+  "config": {
+    "thinking": true,
+    "max_gen_toks": null,
+    "temperature": null
+  },
+  "evidence": {
+    "engine": "styles01 vLLM + TensorFlash",
+    "image": "ghcr.io/styles01/dsv41-1017-exl3-2x-dgx-sparks:v2",
+    "kv": "2.68 GB / rank",
+    "context": "262K server context; vision on",
+    "source": "Fresh Spark needle log; depth from operator record",
+    "raw": "/evidence/needle-styles01.log",
+    "note": "Generation cap and temperature not recorded in log. Timestamp is archive date."
+  },
+  "ts": "2026-10-21T00:00:00Z",
+  "hardware": "2 \u00d7 NVIDIA DGX Spark / TP2 / EXL3 2.9bpw"
+}

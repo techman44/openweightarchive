@@ -9,7 +9,7 @@ import { submissionSchema, draftSchema } from '../lib/schemas.ts';
 import { verifyChallenge } from '../lib/server/challenge.ts';
 
 const secret = 'local-test-secret-with-at-least-thirty-two-characters';
-const run = JSON.parse(await readFile(new URL('../fixtures/reference-8b.json', import.meta.url), 'utf8'));
+const run = JSON.parse(await readFile(new URL('../tests/fixtures/run-reference-8b.json', import.meta.url), 'utf8'));
 const input = submissionSchema.parse({ submitter: 'Test', model: 'reference-8b', endpoint: 'https://inference.example.com/v1', attestation: 'self-reported', run, consent: true });
 
 test('D1 migrations and repositories preserve claims, quotas, drafts and review history', async (t) => {
@@ -52,7 +52,7 @@ test('D1 migrations and repositories preserve claims, quotas, drafts and review 
   await assert.rejects(db.prepare('UPDATE submissions SET nonce = ? WHERE id = ?').bind('replacement', claims[0].id).run(), /OWA_IMMUTABLE_CLAIM/);
   assert.equal(await db.prepare('SELECT nonce_consumed_at FROM submissions WHERE id = ?').bind(claims[0].id).first('nonce_consumed_at'), null);
 
-  const model = JSON.parse(await readFile(new URL('../src/content/models/reference-8b.json', import.meta.url), 'utf8'));
+  const model = JSON.parse(await readFile(new URL('./fixtures/reference-8b.json', import.meta.url), 'utf8'));
   const drafts = [
     draftSchema.parse({ collection: 'models', data: model }),
     draftSchema.parse({ collection: 'benchmarks', data: { slug: 'test-run', model: 'reference-8b', provenance: 'claim', run } }),

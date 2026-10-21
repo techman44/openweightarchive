@@ -5,9 +5,9 @@ const text = z.string().trim().min(1).max(240);
 const date = z.iso.datetime({ offset: true });
 
 export const configSchema = z.object({
-  thinking: z.boolean(),
-  max_gen_toks: z.number().int().min(1).max(1_048_576),
-  temperature: z.number().finite().min(0).max(10),
+  thinking: z.boolean().nullable(),
+  max_gen_toks: z.number().int().min(1).max(1_048_576).nullable(),
+  temperature: z.number().finite().min(0).max(10).nullable(),
 }).strict();
 
 // Preserve the ct-bench envelope. Scores are raw; no implicit percent conversion.
@@ -18,7 +18,15 @@ export const runSchema = z.object({
   metrics: z.record(text, z.object({
     score: z.number().finite().nullable(),
     n: z.number().int().nonnegative(),
+    stderr: z.number().finite().nullable().optional(),
+    unit: z.string().optional(),
+    status: z.enum(['verified', 'partial', 're-running', 'queued', 'scheduled', 'pass']).optional(),
+    note: z.string().optional(),
   }).strict()).refine((metrics) => Object.keys(metrics).length > 0, 'At least one task is required.'),
+  evidence: z.object({
+    engine: text, image: text, kv: text, context: text,
+    source: z.string(), raw: z.string(), note: z.string(),
+  }).strict().optional(),
   ts: date,
   hardware: z.union([
     text,
@@ -41,13 +49,13 @@ export const modelSchema = z.object({
     vram4kGiB: z.number().positive().nullable(),
     vram16kGiB: z.number().positive().nullable(),
     basis: z.enum(['estimated', 'measured']),
-  }).strict()).min(1),
+  }).strict()),
 }).strict();
 
 export const benchmarkSchema = z.object({
   slug: slugSchema,
   model: slugSchema,
-  provenance: z.enum(['fixture', 'claim']),
+  provenance: z.enum(['fixture', 'claim', 'verified', 'partial']),
   run: runSchema,
 }).strict();
 
