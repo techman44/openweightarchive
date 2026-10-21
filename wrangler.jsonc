@@ -11,7 +11,7 @@
       "binding": "OWA_DB",
       "database_name": "owa-cms",
       // Placeholder: replace with the existing D1 database UUID before deployment.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "20976489-fa68-4f70-9c14-2613c39bb477",
       "migrations_dir": "./migrations"
     }
   ],
