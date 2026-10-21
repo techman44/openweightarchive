@@ -1,0 +1,71 @@
+---
+import type { RegisterRow } from '../../lib/register';
+interface Props { rows: RegisterRow[]; id?: string; }
+const { rows, id = 'register' } = Astro.props;
+const suites = [...new Set(rows.map((row) => row.suite))];
+const columns = [
+  ['model', 'Model / run', false], ['task', 'Task / suite', false], ['score', 'Score', true],
+  ['n', 'Samples', true], ['config', 'Run details', false], ['ts', 'Recorded', false], ['provenance', 'Evidence', false],
+] as const;
+---
+<section data-register aria-label="Benchmark register">
+  <div class="register-tools" data-tools hidden>
+    <label for={`${id}-search`}>Search the register<input id={`${id}-search`} type="search" data-search placeholder="Model, task, hardware…" /></label>
+    <label for={`${id}-suite`}>Suite<select id={`${id}-suite`} data-suite><option value="">All suites</option>{suites.map((suite) => <option value={suite}>{suite}</option>)}</select></label>
+    <p class="mono muted" data-count aria-live="polite">{rows.length} task records</p>
+  </div>
+  <div class="table-scroll" role="region" aria-label="Benchmark records, scroll horizontally for all columns" tabindex="0">
+    <table>
+      <caption>Raw scores from ct-bench. Compare only the same task, suite and configuration. Unavailable is never zero. Dates are UTC.</caption>
+      <thead><tr>{columns.map(([key, title, numeric]) => <th scope="col" class:list={[numeric && 'numeric']} aria-sort={key === 'ts' ? 'descending' : undefined}>
+        <span data-static-heading>{title}</span><button type="button" data-sort={key} data-numeric={numeric} hidden>{title}<span class="sr-only">{key === 'config' ? ': sort by maximum generated tokens' : ': sort'}</span></button>
+      </th>)}</tr></thead>
+      <tbody>{rows.map((row) => <tr data-search-text={`${row.model} ${row.task} ${row.suite} ${row.hardware} ${row.arm}`.toLowerCase()} data-suite-name={row.suite}>
+        <th scope="row" data-value={row.model}><a href={`/models/${row.modelSlug}`}>{row.model}</a><span class="cell-sub mono">{row.arm.replace(`${row.modelSlug}-`, '')}</span></th>
+        <td data-value={`${row.task} ${row.suite}`}>{row.task}<span class="cell-sub mono">{row.suite}</span></td>
+        <td class="numeric score" data-value={row.score ?? ''}>{row.score === null ? <span class="cell-sub">Unavailable</span> : row.score.toFixed(3)}</td>
+        <td class="numeric mono" data-value={row.n}>{row.n.toLocaleString('en-AU')}</td>
+        <td class="run-details" data-value={row.config.max_gen_toks}><details><summary>{row.config.thinking ? 'Thinking on' : 'Thinking off'} · {row.config.max_gen_toks.toLocaleString('en-AU')} tokens</summary><dl>
+          <div><dt>Arm</dt><dd>{row.arm}</dd></div><div><dt>Temperature</dt><dd>{row.config.temperature}</dd></div><div><dt>Maximum generated tokens</dt><dd>{row.config.max_gen_toks}</dd></div><div><dt>Hardware (self-reported)</dt><dd>{row.hardware}</dd></div><div><dt>Recorded (UTC)</dt><dd><time datetime={row.ts}>{row.ts}</time></dd></div>
+        </dl></details></td>
+        <td data-value={row.ts}><time class="mono" datetime={row.ts}>{row.ts.slice(0, 10)}</time></td>
+        <td data-value={row.provenance}><span class="status">{row.provenance === 'fixture' ? 'Sample fixture' : 'Claim'}</span></td>
+      </tr>)}</tbody>
+    </table>
+  </div>
+  <p class="empty-state muted" data-empty hidden>No records match these filters. Try another model or suite.</p>
+  <noscript><p class="help">All records are shown. Enable JavaScript to search and sort the table.</p></noscript>
+</section>
+<script>
+  import { compareValues } from '../../lib/sort';
+  document.querySelectorAll<HTMLElement>('[data-register]').forEach((register) => {
+    const body = register.querySelector('tbody')!;
+    const rows = Array.from(body.rows);
+    const search = register.querySelector<HTMLInputElement>('[data-search]')!;
+    const suite = register.querySelector<HTMLSelectElement>('[data-suite]')!;
+    register.querySelector<HTMLElement>('[data-tools]')!.hidden = false;
+    const update = () => {
+      const term = search.value.trim().toLowerCase();
+      rows.forEach((row) => { row.hidden = !row.dataset.searchText!.includes(term) || !!suite.value && row.dataset.suiteName !== suite.value; });
+      const count = rows.filter((row) => !row.hidden).length;
+      register.querySelector('[data-count]')!.textContent = `${count} of ${rows.length} task records`;
+      register.querySelector<HTMLElement>('[data-empty]')!.hidden = count !== 0;
+    };
+    search.addEventListener('input', update);
+    suite.addEventListener('change', update);
+    register.querySelectorAll<HTMLButtonElement>('[data-sort]').forEach((button, index) => {
+      button.hidden = false;
+      (button.previousElementSibling as HTMLElement).hidden = true;
+      button.addEventListener('click', () => {
+        const heading = button.closest('th')!;
+        const direction = heading.getAttribute('aria-sort') === 'ascending' ? -1 : 1;
+        register.querySelectorAll('[aria-sort]').forEach((cell) => cell.removeAttribute('aria-sort'));
+        heading.setAttribute('aria-sort', direction === 1 ? 'ascending' : 'descending');
+        rows.sort((a, b) => compareValues(a.cells[index].dataset.value ?? '', b.cells[index].dataset.value ?? '', button.dataset.numeric === 'true', direction));
+        body.append(...rows);
+        update();
+        register.querySelector('[data-count]')!.textContent += `; sorted by ${button.dataset.sort}, ${direction === 1 ? 'ascending' : 'descending'}`;
+      });
+    });
+  });
+</script>

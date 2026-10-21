@@ -1,0 +1,20 @@
+{
+  "name": "openweightarchive",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.22.0" },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env ./node_modules/astro/bin/astro.mjs dev",
+    "build": "node scripts/schemas.mjs --check && astro build",
+    "start": "node --env-file-if-exists=.env ./dist/server/entry.mjs",
+    "preview": "npm run start",
+    "schemas": "node scripts/schemas.mjs",
+    "test": "node --test tests/*.test.ts",
+    "test:smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@astrojs/node": "11.1.9",
+    "astro": "7.4.1"
+  }
+}

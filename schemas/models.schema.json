@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "slug": {
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "publisher": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "parameters": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "license": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      },
+      "required": [
+        "name",
+        "notes"
+      ],
+      "additionalProperties": false
+    },
+    "contextTokens": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "fixture": {
+      "type": "boolean"
+    },
+    "quantizations": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "quant": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "weightGiB": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "vram4kGiB": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vram16kGiB": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "estimated",
+              "measured"
+            ]
+          }
+        },
+        "required": [
+          "quant",
+          "weightGiB",
+          "vram4kGiB",
+          "vram16kGiB",
+          "basis"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "slug",
+    "name",
+    "publisher",
+    "parameters",
+    "summary",
+    "license",
+    "contextTokens",
+    "fixture",
+    "quantizations"
+  ],
+  "additionalProperties": false
+}

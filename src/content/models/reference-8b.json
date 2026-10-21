@@ -1,0 +1,11 @@
+{
+  "slug": "reference-8b", "name": "Reference 8B", "publisher": "Archive fixtures", "parameters": "8 billion",
+  "summary": "A fictional compact model used to demonstrate the archive's record format. All specifications and results on this page are illustrative.",
+  "license": { "name": "Example license", "notes": "Fixture only. No model weights or rights are supplied." },
+  "contextTokens": 32768, "fixture": true,
+  "quantizations": [
+    { "quant": "Q4_K_M", "weightGiB": 4.6, "vram4kGiB": 6.2, "vram16kGiB": 8.8, "basis": "estimated" },
+    { "quant": "Q8_0", "weightGiB": 8.1, "vram4kGiB": 9.7, "vram16kGiB": 12.3, "basis": "estimated" },
+    { "quant": "BF16", "weightGiB": 14.9, "vram4kGiB": 16.5, "vram16kGiB": null, "basis": "estimated" }
+  ]
+}

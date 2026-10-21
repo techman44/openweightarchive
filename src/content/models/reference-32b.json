@@ -1,0 +1,11 @@
+{
+  "slug": "reference-32b", "name": "Reference 32B", "publisher": "Archive fixtures", "parameters": "32 billion",
+  "summary": "A fictional larger model illustrating a different generation configuration. Its sample scores should not be ranked against runs with a different token budget.",
+  "license": { "name": "Example license", "notes": "Fixture only. No model weights or rights are supplied." },
+  "contextTokens": 32768, "fixture": true,
+  "quantizations": [
+    { "quant": "Q4_K_M", "weightGiB": 18.6, "vram4kGiB": 21.4, "vram16kGiB": 27.8, "basis": "estimated" },
+    { "quant": "Q8_0", "weightGiB": 33.2, "vram4kGiB": 36, "vram16kGiB": 42.4, "basis": "estimated" },
+    { "quant": "BF16", "weightGiB": 59.6, "vram4kGiB": 62.4, "vram16kGiB": null, "basis": "estimated" }
+  ]
+}

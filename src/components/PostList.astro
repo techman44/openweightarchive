@@ -1,0 +1,13 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props { posts: CollectionEntry<'posts'>[]; }
+const { posts } = Astro.props;
+---
+<div class="post-grid">
+  {posts.map((post) => <article class="post-card">
+    <span class="eyebrow">{post.data.category}</span>
+    <h3><a href={`/blog/${post.id}`}>{post.data.title}</a></h3>
+    <p>{post.data.description}</p>
+    <time datetime={post.data.published}>{new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(post.data.published))}</time>
+  </article>)}
+</div>

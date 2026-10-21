@@ -1,0 +1,7 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import PostList from '../../components/PostList.astro';
+const posts = (await getCollection('posts')).sort((a, b) => b.data.published.localeCompare(a.data.published));
+---
+<Layout title="Journal"><header class="page-intro"><p class="eyebrow">The archive journal</p><h1>Read beyond the result.</h1><p class="lead">Editorial notes on models, measurement and what the evidence supports. News will be published with sources and corrections.</p></header><PostList posts={posts} /><p class="notice">This first edition contains notes on our methods. No news reporting has been published yet.</p></Layout>

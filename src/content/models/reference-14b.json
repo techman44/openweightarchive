@@ -1,0 +1,11 @@
+{
+  "slug": "reference-14b", "name": "Reference 14B", "publisher": "Archive fixtures", "parameters": "14 billion",
+  "summary": "A fictional mid-sized model for inspecting quantization and memory tradeoffs. These values describe a sample record, not a released model.",
+  "license": { "name": "Example license", "notes": "Fixture only. No model weights or rights are supplied." },
+  "contextTokens": 32768, "fixture": true,
+  "quantizations": [
+    { "quant": "Q4_K_M", "weightGiB": 8.4, "vram4kGiB": 10.1, "vram16kGiB": 13.6, "basis": "estimated" },
+    { "quant": "Q8_0", "weightGiB": 14.8, "vram4kGiB": 16.5, "vram16kGiB": 20, "basis": "estimated" },
+    { "quant": "BF16", "weightGiB": 26.1, "vram4kGiB": 27.8, "vram16kGiB": null, "basis": "estimated" }
+  ]
+}

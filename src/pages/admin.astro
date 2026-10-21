@@ -1,0 +1,45 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { repository } from '../../lib/server/store';
+export const prerender = false;
+let claims: Awaited<ReturnType<ReturnType<typeof repository>['listClaims']>> = [];
+let drafts: Awaited<ReturnType<ReturnType<typeof repository>['listDrafts']>> = [];
+let unavailable = false;
+try { [claims, drafts] = await Promise.all([repository().listClaims(), repository().listDrafts()]); }
+catch { unavailable = true; Astro.response.status = 503; }
+---
+<Layout title="Editorial desk" noindex>
+  <header class="page-intro"><p class="eyebrow">Private / Editorial desk</p><h1>Admin stub.</h1><p class="lead">Review submitted claims and save structured drafts. Publication remains a reviewed content change and rebuild.</p></header>
+  {unavailable ? <p class="notice">The file store is unavailable. Check its permissions and integrity before continuing.</p> : <>
+    <p class="notice">{claims.length} claims · {drafts.length} drafts. Verification is not connected. No administrative action can award verified status.</p>
+    <section class="section"><div class="section-heading"><h2>Claim queue.</h2></div>
+      {claims.length === 0 ? <p class="muted">No claims have been submitted.</p> : <div class="stack">{claims.slice().reverse().map((claim) => <article class="notice stack">
+        <div><h3>{claim.submission.model}</h3><p class="help">{claim.submission.submitter} · {claim.createdAt} · {claim.status}</p><p class="mono">Claim {claim.id}</p></div>
+        <details><summary>Inspect declared endpoint and run</summary><p>{claim.submission.endpoint}</p><p>Requested tier: {claim.submission.attestation} (unreviewed)</p><pre>{JSON.stringify(claim.submission.run, null, 2)}</pre><p class="help">Challenge expires {claim.challenge.expiresAt}. A signed challenge does not verify this claim.</p></details>
+        <form class="stack" data-admin-form data-kind="review" action="/api/admin/reviews" method="post"><input type="hidden" name="claimId" value={claim.id} /><div class="form-grid"><label>Decision<select name="decision"><option value="needs-information">Needs information</option><option value="rejected">Reject claim</option></select></label><label>Review note<input name="note" required maxlength="2000" /></label></div><div><button type="submit" disabled>Save review</button></div><p class="form-result" role="status" tabindex="-1"></p></form>
+      </article>)}</div>}
+    </section>
+    <section class="section"><div class="section-heading"><h2>Save an editorial draft.</h2></div><form class="stack reading" style="margin-left: 0" data-admin-form data-kind="draft" action="/api/admin/drafts" method="post"><label>Collection<select name="collection"><option value="models">Models</option><option value="benchmarks">Benchmarks</option><option value="posts">Posts</option></select></label><label>Record JSON<textarea class="mono" name="data" rows="12" required spellcheck="false" aria-describedby="draft-help"></textarea></label><p class="help" id="draft-help">Use the matching collection schema from the repository. Post drafts include slug and body. Drafts stay private until an editor publishes reviewed content.</p><div><button type="submit" disabled>Save draft</button></div><p class="form-result" role="status" tabindex="-1"></p></form></section>
+    {drafts.length > 0 && <section class="section stack"><h2>Stored drafts.</h2>{drafts.slice().reverse().map((draft) => <details><summary>{draft.input.collection} / {draft.input.data.slug} · {draft.createdAt}</summary><pre>{JSON.stringify(draft.input.data, null, 2)}</pre></details>)}</section>}
+  </>}
+  <noscript><p class="notice">Use the JSON API to save reviews and drafts, or enable JavaScript for these forms.</p></noscript>
+</Layout>
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-admin-form]').forEach((form) => {
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const result = form.querySelector<HTMLElement>('[role="status"]')!;
+    button.disabled = false;
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault(); button.disabled = true; result.dataset.error = 'false'; result.textContent = 'Saving…';
+      try {
+        const data = Object.fromEntries(new FormData(form));
+        const payload = form.dataset.kind === 'draft' ? { collection: data.collection, data: JSON.parse(String(data.data)) } : data;
+        const response = await fetch(form.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const body = await response.json();
+        if (!response.ok) throw new Error([body.error, ...(body.fields ?? []).map((field: { path: string; message: string }) => `${field.path}: ${field.message}`)].join(' '));
+        result.textContent = `${body.message} Reload to see the updated records.`;
+      } catch (error) { result.dataset.error = 'true'; result.textContent = error instanceof Error ? error.message : 'Save failed. Try again.'; }
+      finally { button.disabled = false; result.focus(); }
+    });
+  });
+</script>

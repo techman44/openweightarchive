@@ -1,0 +1,14 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import Register from '../components/Register.astro';
+import { registerRows } from '../../lib/register';
+const [models, benchmarks] = await Promise.all([getCollection('models'), getCollection('benchmarks')]);
+const rows = registerRows(benchmarks.map((entry) => entry.data), models.map((entry) => entry.data));
+---
+<Layout title="Benchmarks">
+  <header class="page-intro"><p class="eyebrow">The measurement register</p><h1>Every score has conditions.</h1><p class="lead">Inspect the task, generation settings and hardware alongside each result. Sort to explore; compare only like with like.</p></header>
+  <p class="notice"><strong>Sample fixtures.</strong> These are illustrative raw scores, not measured model performance. A missing score is unavailable, not zero.</p>
+  <div class="section"><Register rows={rows} /></div>
+  <section class="principle"><h2>Keep the evidence with the number.</h2><div><p>Submissions enter the archive as claims. A future verification service will reproduce a random subset of tasks before awarding verified status.</p><a class="text-link" href="/submit">Submit a score <span aria-hidden="true">↗</span></a></div></section>
+</Layout>

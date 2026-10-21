@@ -1,0 +1,52 @@
+---
+import Layout from '../layouts/Layout.astro';
+import IntakeStatus from '../components/IntakeStatus.astro';
+import sample from '../../fixtures/reference-8b.json';
+---
+<Layout title="Submit a score">
+  <header class="page-intro"><p class="eyebrow">Contribute to the record</p><h1>Submit a claim.</h1><p class="lead">Share the run, its conditions and an endpoint where it can be reproduced. Every submission begins as an unverified claim.</p></header>
+  <IntakeStatus server:defer><p class="notice" slot="fallback">Intake availability is checked when you submit. Automated reproduction is not connected in Phase 1.</p></IntakeStatus>
+  <div class="form-layout section">
+    <form id="submission-form" class="stack" action="/api/submissions" method="post">
+      <fieldset class="stack"><legend>01 / Source & endpoint</legend>
+        <div class="form-grid"><label for="submitter">Submitter name or handle<input id="submitter" name="submitter" required maxlength="240" autocomplete="nickname" /></label><label for="model">Model slug<input id="model" name="model" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="publisher-model-8b" /></label></div>
+        <label for="endpoint">Inference endpoint<input id="endpoint" name="endpoint" type="url" required maxlength="2048" placeholder="https://inference.example.com/v1" aria-describedby="endpoint-help" /></label>
+        <p class="help" id="endpoint-help">HTTPS only. Do not include passwords, API keys or query strings. This endpoint is private to the editorial queue and will not be contacted in Phase 1.</p>
+        <label for="attestation">Requested hardware attestation tier<select id="attestation" name="attestation"><option value="self-reported">Self-reported</option><option value="photo">Photo evidence (review required)</option><option value="witnessed-remote">Witnessed remote session (review required)</option></select></label>
+        <p class="help">Selecting a tier requests review; it does not award that tier. Do not paste evidence containing credentials or identifying details.</p>
+      </fieldset>
+      <fieldset class="stack"><legend>02 / The ct-bench record</legend><label for="run">Run JSON<textarea id="run" name="run" rows="17" required spellcheck="false" class="mono" aria-describedby="run-help" placeholder={JSON.stringify(sample, null, 2)}></textarea></label><p class="help" id="run-help">Include arm, suite, config (thinking, max_gen_toks, temperature), task metrics (score, n), ts and hardware. The placeholder is a fictional example; replace it with your own complete record.</p></fieldset>
+      <label class="check-label"><input type="checkbox" name="consent" required /><span>I control this endpoint and permit a future ct-bench reproduction of this claim. I understand that the score and requested hardware tier remain unverified.</span></label>
+      <div><button type="submit" class="primary" disabled>Record claim <span aria-hidden="true">↗</span></button></div>
+      <noscript><p class="notice">JavaScript is required to submit this JSON form. The submission API is also available to command-line clients; see the repository README.</p></noscript>
+      <div class="form-result" id="submission-result" role="status" tabindex="-1" aria-live="polite"></div>
+    </form>
+    <aside class="form-aside stack"><h2>How a claim will be checked.</h2><ol><li>Declare the endpoint and complete generation configuration.</li><li>Receive a signed nonce challenge, valid for 72 hours.</li><li>Our harness re-runs a random 5% task subset against the declared endpoint.</li><li>Only a passing reproduction earns a verified label.</li></ol><p class="help">Phase 1 implements intake and the signed challenge. The harness and verified labels are reserved for a later phase. Expired receipts never become verified automatically.</p><a class="text-link" href="/blog/how-we-record-a-score">Read the recording method</a></aside>
+  </div>
+</Layout>
+<script>
+  const form = document.querySelector<HTMLFormElement>('#submission-form')!;
+  const result = document.querySelector<HTMLElement>('#submission-result')!;
+  const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  button.disabled = false;
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    result.dataset.error = 'false';
+    result.textContent = 'Recording your claim…';
+    try {
+      const fields = new FormData(form);
+      let run;
+      try { run = JSON.parse(String(fields.get('run'))); } catch { throw new Error('Run JSON is invalid. Check the record and try again.'); }
+      const response = await fetch('/api/submissions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ submitter: fields.get('submitter'), model: fields.get('model'), endpoint: fields.get('endpoint'), attestation: fields.get('attestation'), consent: fields.get('consent') === 'on', run }) });
+      const body = await response.json();
+      if (!response.ok) throw new Error([body.error, ...(body.fields ?? []).map((field: { path: string; message: string }) => `${field.path}: ${field.message}`)].join(' '));
+      result.textContent = `${body.message}\nClaim ID: ${body.id}\nChallenge expires: ${body.challenge.expiresAt}`;
+      const receipt = document.createElement('pre');
+      receipt.textContent = JSON.stringify(body.challenge, null, 2);
+      result.append(receipt);
+      form.reset();
+    } catch (error) { result.dataset.error = 'true'; result.textContent = error instanceof Error ? error.message : 'The claim could not be saved. Please try again.'; }
+    finally { button.disabled = false; result.focus(); }
+  });
+</script>

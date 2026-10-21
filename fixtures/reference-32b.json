@@ -1,0 +1,8 @@
+{
+  "arm": "reference-32b-q4_k_m",
+  "suite": "ct-bench-demo-v1",
+  "config": { "thinking": true, "max_gen_toks": 4096, "temperature": 0.6 },
+  "metrics": { "reasoning": { "score": 0.775, "n": 80 }, "code": { "score": 0.725, "n": 40 } },
+  "ts": "2026-10-18T08:00:00Z",
+  "hardware": { "gpu": "Example GPU, 48 GiB", "runtime": "fixture", "driver": null }
+}

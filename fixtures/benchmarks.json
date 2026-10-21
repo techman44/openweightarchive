@@ -1,0 +1,5 @@
+[
+  { "slug": "reference-8b-q4", "model": "reference-8b", "provenance": "fixture", "file": "reference-8b.json" },
+  { "slug": "reference-14b-q4", "model": "reference-14b", "provenance": "fixture", "file": "reference-14b.json" },
+  { "slug": "reference-32b-q4", "model": "reference-32b", "provenance": "fixture", "file": "reference-32b.json" }
+]

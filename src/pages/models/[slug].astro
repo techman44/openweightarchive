@@ -1,0 +1,29 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Register from '../../components/Register.astro';
+import { registerRows } from '../../../lib/register';
+export async function getStaticPaths() {
+  return (await getCollection('models')).map((entry) => ({ params: { slug: entry.data.slug }, props: { entry } }));
+}
+interface Props { entry: CollectionEntry<'models'>; }
+const { entry } = Astro.props;
+const model = entry.data;
+const benchmarks = (await getCollection('benchmarks')).filter((benchmark) => benchmark.data.model === model.slug);
+const rows = registerRows(benchmarks.map((benchmark) => benchmark.data), [model]);
+const memory = (value: number | null) => value === null ? 'Unavailable' : value.toFixed(1);
+---
+<Layout title={model.name} description={model.summary}>
+  <header class="page-intro"><a class="text-link" href="/">← The register</a><p class="eyebrow">Model record / {model.publisher}</p><h1>{model.name}</h1><p class="lead">{model.summary}</p></header>
+  {model.fixture && <p class="notice"><strong>Fictional reference model.</strong> Specifications, memory estimates, license and scores are sample content.</p>}
+  <dl class="facts"><div><dt>Parameters</dt><dd>{model.parameters}</dd></div><div><dt>Context window</dt><dd class="numeric">{model.contextTokens.toLocaleString('en-AU')} tokens</dd></div><div><dt>License</dt><dd>{model.license.name}</dd></div><div><dt>Recorded runs</dt><dd class="numeric">{benchmarks.length}</dd></div></dl>
+  <section class="section" aria-labelledby="vram-title"><div class="section-heading"><div><p class="eyebrow">01 / Deployment record</p><h2 id="vram-title">Quantization & memory.</h2></div><p class="help">GiB · batch size 1 · full GPU offload</p></div>
+    <div class="table-scroll" role="region" tabindex="0" aria-label="Quantization and VRAM matrix, scroll horizontally"><table>
+      <caption>Illustrative estimates include weights, cache and runtime overhead. Actual VRAM depends on architecture, cache precision and runtime. 4k = 4,096 tokens; 16k = 16,384 tokens.</caption>
+      <thead><tr><th scope="col">Quantization</th><th scope="col" class="numeric">Weights (GiB)</th><th scope="col" class="numeric">VRAM at 4k (GiB)</th><th scope="col" class="numeric">VRAM at 16k (GiB)</th><th scope="col">Basis</th></tr></thead>
+      <tbody>{model.quantizations.map((quant) => <tr><th scope="row" class="mono">{quant.quant}</th><td class="numeric mono">{memory(quant.weightGiB)}</td><td class="numeric mono">{memory(quant.vram4kGiB)}</td><td class="numeric mono">{memory(quant.vram16kGiB)}</td><td>{quant.basis}</td></tr>)}</tbody>
+    </table></div>
+  </section>
+  <section class="section" aria-labelledby="scores-title"><div class="section-heading"><div><p class="eyebrow">02 / Benchmark record</p><h2 id="scores-title">Scores & conditions.</h2></div></div><Register rows={rows} /></section>
+  <section class="principle"><h2>License & provenance.</h2><div><p>{model.license.notes}</p>{model.license.url && <a class="text-link" href={model.license.url}>Read the source license</a>}<p class="help" style="margin-top: 1rem">Open weights do not, on their own, establish unrestricted use. A published record must link to the exact license and model revision.</p></div></section>
+</Layout>

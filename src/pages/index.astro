@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import Register from '../components/Register.astro';
+import PostList from '../components/PostList.astro';
+import { registerRows } from '../../lib/register';
+const [models, benchmarks, posts] = await Promise.all([getCollection('models'), getCollection('benchmarks'), getCollection('posts')]);
+const rows = registerRows(benchmarks.map((entry) => entry.data), models.map((entry) => entry.data));
+const latest = posts.sort((a, b) => b.data.published.localeCompare(a.data.published)).slice(0, 3);
+---
+<Layout title="The register">
+  <section class="hero" aria-labelledby="hero-title">
+    <div><p class="eyebrow">An independent model register</p><h1 id="hero-title">A record of<br />open weights.</h1><p class="lead">Models, measurements, and the conditions behind them. Collected with care. Open to scrutiny.</p></div>
+    <aside class="accession" aria-label="Archive contents"><p class="eyebrow">The collection / Phase 1</p><dl>
+      <div><dt>Sample models</dt><dd>0{models.length}</dd></div><div><dt>Recorded runs</dt><dd>0{benchmarks.length}</dd></div><div><dt>Editorial notes</dt><dd>0{posts.length}</dd></div>
+    </dl><p class="help">A working catalogue, with provenance kept beside every result.</p></aside>
+  </section>
+  <p class="notice"><strong>Scaffold edition.</strong> Models, specifications and benchmark scores are fictional sample data. No result has been verified.</p>
+  <section class="section" aria-labelledby="register-title">
+    <div class="section-heading"><div><p class="eyebrow">01 / The register</p><h2 id="register-title">Measurements, in context.</h2></div><a class="text-link" href="/benchmarks">Explore benchmarks <span aria-hidden="true">↗</span></a></div>
+    <Register rows={rows} />
+  </section>
+  <section class="section" aria-labelledby="journal-title"><div class="section-heading"><div><p class="eyebrow">02 / From the journal</p><h2 id="journal-title">Notes from the archive.</h2></div><a class="text-link" href="/blog">All entries <span aria-hidden="true">↗</span></a></div><PostList posts={latest} /></section>
+  <section class="principle"><div><p class="eyebrow">Our standard</p><h2 style="margin-top: 1rem">A score is a claim until it can be repeated.</h2></div><div><p>A model name and a number are only the beginning. We record the configuration, hardware, task and sample count so the result can be examined on its own terms.</p><a class="text-link" href="/blog/how-we-record-a-score">Read the recording method <span aria-hidden="true">↗</span></a></div></section>
+</Layout>

@@ -1,0 +1,38 @@
+---
+import '../styles/global.css';
+interface Props { title: string; description?: string; noindex?: boolean; }
+const { title, description = 'An independent archive of open-weight models, benchmark records, and editorial notes.', noindex = false } = Astro.props;
+const path = Astro.url.pathname;
+const links = [ ['/', 'The register'], ['/benchmarks', 'Benchmarks'], ['/blog', 'Journal'], ['/submit', 'Submit a score'] ];
+---
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#111513" />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="canonical" href={new URL(path, Astro.site)} />
+    <title>{title} · OpenWeightArchive</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="site-header">
+        <a class="wordmark" href="/" aria-label="OpenWeightArchive home">
+          <span class="wordmark-seal" aria-hidden="true">OW</span>
+          <span class="wordmark-name">OpenWeight<span>Archive</span></span>
+        </a>
+        <nav class="nav" aria-label="Main navigation">
+          {links.map(([href, label]) => <a href={href} aria-current={(href === '/' ? path === '/' || path.startsWith('/models/') : path.startsWith(href)) ? 'page' : undefined}>{label}</a>)}
+        </nav>
+      </header>
+      <main id="main" tabindex="-1"><slot /></main>
+      <footer class="site-footer">
+        <p>OpenWeightArchive <span aria-hidden="true">/</span> An independent record. Sydney, Australia.</p>
+        <nav aria-label="Footer"><a href="/blog/how-we-record-a-score">Our method</a><a href="/submit">Contribute</a><a href="/admin">Admin</a></nav>
+      </footer>
+    </div>
+  </body>
+</html>

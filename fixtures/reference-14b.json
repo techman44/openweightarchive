@@ -1,0 +1,8 @@
+{
+  "arm": "reference-14b-q4_k_m",
+  "suite": "ct-bench-demo-v1",
+  "config": { "thinking": false, "max_gen_toks": 2048, "temperature": 0 },
+  "metrics": { "reasoning": { "score": 0.7, "n": 80 }, "code": { "score": null, "n": 0 } },
+  "ts": "2026-10-19T08:00:00Z",
+  "hardware": "Example GPU, 24 GiB; fixture"
+}
